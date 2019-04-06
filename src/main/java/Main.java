@@ -28,7 +28,7 @@ public class Main {
 			host.addContext("/get/lists", new getLists());
 			
 			//param: name, email, ...
-			host.addContext("/create/account", new createAccountHandler());
+			host.addContext("/create/account", new createUserHandler());
 			
 			//params: list limit				| returns all users up to limit
 			host.addContext("/get/users", new getUsersHandler());
@@ -85,22 +85,37 @@ public class Main {
 		return 400;
 	}
 	
-	private static class createAccountHandler implements ContextHandler {
+	private static class createUserHandler implements ContextHandler {
 		
 		@Override
 		public int serve(HTTPServer.Request request, HTTPServer.Response response) throws IOException {
+			Map<String, String> params = request.getParams();
+			
 			JSONObject responseObject = new JSONObject();
 			JSONObject header = new JSONObject();
-			JSONArray results = new JSONArray();
+			JSONArray wordsResp = new JSONArray();
 			
-			//try {
-			//	ResultSet resultSet = db.execute("")
-			//}
+			try {
+				db.execute("INSERT INTO user_data VALUES (DEFAULT, ?, ?, ?, ?, ?)",
+						params.get("email"),
+						params.get("age"),
+						params.get("gender"),
+						params.get("name"),
+						params.get("password"));
+				
+				
+			} catch (Exception e) {
+				sendBadApiReq(response);
+			}
 			
+			header.put("status", 200);
+			responseObject.put("header", header.put("added", wordsResp));
+			
+			sendResponse(response, 200, responseObject);
 			return 0;
 		}
 	}
-		
+	
 	private static class getUsersHandler implements ContextHandler {
 		@Override
 		public int serve(HTTPServer.Request request, HTTPServer.Response response) throws IOException {
