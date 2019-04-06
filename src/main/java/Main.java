@@ -14,11 +14,11 @@ public class Main {
 	
 	
 	public static void main(String[] args) {
-		Log.status("starting vokTrainer Server".toUpperCase());
+		Log.status("starting Nutradishin Server".toUpperCase());
 		
 		db  = new Database();
 		if (db.isValid()) {
-			Log.success("Database connection established");
+			Log.success("database connection established");
 			
 			HTTPServer server = new HTTPServer(1337);
 			VirtualHost host = server.getVirtualHost(null);
@@ -34,7 +34,7 @@ public class Main {
 			host.addContext("/get/users", new getUsersHandler());
 			
 			//param: user:id
-			//host.addContext("/get/user", new getUserHandler());
+			host.addContext("/get/user", new getUserHandler());
 			
 			//param: food:id || food:name
 			//host.addContext("/get/food", new getFoodHandler());
@@ -131,9 +131,9 @@ public class Main {
 					JSONObject result = new JSONObject();
 					
 					result.put("id", resultSet.getInt("id_User"));
-					result.put("name", resultSet.getInt("name"));
-					result.put("age", resultSet.getInt("age"));
-					result.put("gender", resultSet.getInt("gender"));
+					result.put("name", resultSet.getString("name"));
+					result.put("age", resultSet.getString("age"));
+					result.put("gender", resultSet.getString("gender"));
 					
 					results.put(result);
 				}
@@ -143,14 +143,53 @@ public class Main {
 				responseObject.put("header", header);
 				
 				sendResponse(response, 200, responseObject);
-				Log.status("");
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-				
+			
+			Log.status("Everything went right");
 			return 0;
 			}
 		}
+	
+	private static class getUserHandler implements ContextHandler {
+		@Override
+		public int serve(HTTPServer.Request request, HTTPServer.Response response) throws IOException {
+			Log.warning("getUser request");
+			Map<String, String> params = request.getParams();
+			
+			
+			JSONObject responseObject = new JSONObject();
+			JSONObject header = new JSONObject();
+			JSONArray results = new JSONArray();
+			
+			try {
+				ResultSet resultSet = db.execute("SELECT * FROM user_data WHERE id_User=?", params.get("id"));
+				
+				
+				resultSet.next();
+				JSONObject result = new JSONObject();
+				result.put("id", resultSet.getInt("id_User"));
+				result.put("name", resultSet.getString("name"));
+				result.put("gender", resultSet.getString("gender"));
+				result.put("age", resultSet.getString("age"));
+				
+				results.put(result);
+				
+				header.put("status", 200);
+				header.put("parameters", params.toString());
+				responseObject.put("results", results);
+				responseObject.put("header", header);
+				
+				sendResponse(response, 200, responseObject);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			Log.status("getUser request fulfilled");
+			return 0;
+		}
+	}
 	
 	
 	
